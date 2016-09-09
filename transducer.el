@@ -127,6 +127,7 @@ when the function stops producing values."
     (funcall reductor result)))
 
 
+;;* Reducer
 (defun transducer-reducer (initial-fn complete-fn step-fn)
   "Create a reducer with an initial seed function INITIAL-FN,
 a final function COMPLETE-FN, and a step function STEP-FN."
@@ -137,14 +138,12 @@ a final function COMPLETE-FN, and a step function STEP-FN."
         (1 (apply complete-fn args))
         (2 (apply step-fn args))))))
 
-
-;;* Reducer
 (defun transducer-list-reducer ()
   "A reducer for lists."
   (transducer-reducer
    (lambda () (list))
-   (lambda (result) (reverse result))
-   (lambda (result item) (push item result) result)))
+   (lambda (result) result)
+   (lambda (result item) (append result (list item)))))
 
 
 ;;* Api
@@ -168,7 +167,7 @@ a final function COMPLETE-FN, and a step function STEP-FN."
          result)))))
 
 (defun transducer-composes (&rest reducers)
-  "Compose transducers TNS.
+  "Compose transducers REDUCERS.
 The order is left to right instead of the standard right to left
 due to the implementation of transducers in general."
   (lambda (reducer)
@@ -176,19 +175,26 @@ due to the implementation of transducers in general."
      (lambda ( accumulated-reducer new-reducer)
        (funcall new-reducer accumulated-reducer))
      reducer
-     reducers)))
+     (reverse reducers))))
 
-(defun transducer-distinct-with (equality)
+
+(defun transducer-distinct ()
   "Distinct reducer with EQUALITY predicate."
   (lambda (reducer)
-    (transducer-reducer
-     (lambda () (funcall reducer))
-     (lambda (result) nil)
-     (lambda (result item) nil))))
+    (lexical-let ((cache-table (make-hash-table))
+        (not-found (make-symbol "distinct-not-found")))
+      (transducer-reducer
+       (lambda () (funcall reducer))
+       (lambda (result) (funcall reducer result))
+       (lambda (result item)
+         (let ((found-item (gethash item cache-table not-found)))
+           (if (not (eq found-item not-found))
+               result
+             (puthash item t cache-table)
+             (funcall reducer result item))))))))
 
-(defun transducer-max-with (maxer)
-  "Max reducer with MAXER function.")
 
 (provide 'transducer)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; transducer.el ends here

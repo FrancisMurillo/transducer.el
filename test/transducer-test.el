@@ -45,7 +45,117 @@
 ;;
 ;;; Code:
 
-(ert-deftest transducer-test/)
+(ert-deftest transducer-test/map ()
+  (let* ((mapper #'1+)
+      (xs (list 1 2 3))
+      (ys (-map mapper xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-map mapper)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((mapper (-partial #'* 2))
+      (xs (list))
+      (ys (-map mapper xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-map mapper)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs))))
+
+(ert-deftest transducer-test/filter ()
+  (let* ((filterer #'oddp)
+      (xs (list 1 2 3))
+      (ys (-filter filterer xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-filter filterer)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((filterer (-partial #'* 2))
+      (xs (list))
+      (ys (-filter filterer xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-filter filterer)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs))))
+
+(ert-deftest transducer-test/composes ()
+  (let* ((mapper #'1+)
+      (filterer #'oddp)
+      (xs (list 1 2 3 4 5))
+      (ys (-filter
+           filterer
+           (-map mapper xs)))
+      (zs
+       (transducer-transduce-stream
+        (transducer-composes
+         (transducer-map mapper)
+         (transducer-filter filterer))
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((mapper #'1+)
+      (filterer #'oddp)
+      (xs (list))
+      (ys (-filter
+           filterer
+           (-map mapper xs)))
+      (zs
+       (transducer-transduce-stream
+        (transducer-composes
+         (transducer-map mapper)
+         (transducer-filter filterer))
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((mapper #'1+)
+      (filterer #'oddp)
+      (remapper #'number-to-string)
+      (xs (list 1 2 3 4 5))
+      (ys (-map
+           remapper
+           (-filter
+            filterer
+            (-map mapper xs))))
+      (zs
+       (transducer-transduce-stream
+        (transducer-composes
+         (transducer-composes
+          (transducer-map mapper)
+          (transducer-filter filterer))
+         (transducer-map remapper))
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'string-equal ys zs))))
+
+(ert-deftest transducer-test/distinct ()
+  (let* ((xs (list 1 2 3 1 2 3 4 5 0))
+      (ys (-distinct xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-distinct)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((xs (list))
+      (ys (-distinct xs))
+      (zs
+       (transducer-transduce-stream
+        (transducer-distinct)
+        (transducer-list-reducer)
+        (transducer-stream-from-list xs))))
+    (should (list-equal #'= ys zs))))
 
 
 
