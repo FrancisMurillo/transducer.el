@@ -48,7 +48,7 @@
 (require 'dash)
 
 
-;;* Interface
+;;* Stream
 (defconst transducer-stream-start 'stream-start
   "A value signifying the start of a stream.
 Not to be used directly by the stream implementation.")
@@ -115,13 +115,17 @@ when the function stops producing values."
                   value (apply stream args))))))
          value)))))
 
-(defun transducer-stream-reducer (stream)
-  "A reducer for STREAM constructs."
-  (lexical-let ((x 1))
-    (transducer-stream
-     (lambda () `1nil)
-     (lambda (result) nil)
-     (lambda (result item) nil))))
+(defun transducer-transduce-stream (transducer reducer stream)
+  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
+  (let* ((reductor (funcall transducer reducer))
+      (value (funcall stream))
+      (result (funcall reductor)))
+    (while (not (eq value transducer-stream-stop))
+      (unless (eq value transducer-stream-start)
+        (setq result (funcall reductor result value)))
+      (setq value (funcall stream)))
+    (funcall reductor result)))
+
 
 (defun transducer-reducer (initial-fn complete-fn step-fn)
   "Create a reducer with an initial seed function INITIAL-FN,
@@ -133,19 +137,26 @@ a final function COMPLETE-FN, and a step function STEP-FN."
         (1 (apply complete-fn args))
         (2 (apply step-fn args))))))
 
-(defun transducer-transduce (transducer )
-  "meo"
-  1)
 
-(defun transducer-mapping (mapper)
+;;* Reducer
+(defun transducer-list-reducer ()
+  "A reducer for lists."
+  (transducer-reducer
+   (lambda () (list))
+   (lambda (result) (reverse result))
+   (lambda (result item) (push item result) result)))
+
+
+;;* Api
+(defun transducer-map (mapper)
   "Map reducer with MAPPER function."
   (lambda (reducer)
     (transducer-reducer
      (lambda () (funcall reducer))
      (lambda (result) (funcall reducer result))
-     (lambda (result item) (funcall reducer result (apply mapper item))))))
+     (lambda (result item) (funcall reducer result (funcall mapper item))))))
 
-(defun transducer-filtering (filterer)
+(defun transducer-filter (filterer)
   "Filter redcuer with FILTERER predicate."
   (lambda (reducer)
     (transducer-reducer
@@ -156,15 +167,24 @@ a final function COMPLETE-FN, and a step function STEP-FN."
            (funcall reducer result item)
          result)))))
 
-(defun transducer-compose (&rest tns)
-  "Compose transducers TNS."
+(defun transducer-composes (&rest reducers)
+  "Compose transducers TNS.
+The order is left to right instead of the standard right to left
+due to the implementation of transducers in general."
   (lambda (reducer)
-    (lexical-let (())
-      1)))
+    (-reduce-from
+     (lambda ( accumulated-reducer new-reducer)
+       (funcall new-reducer accumulated-reducer))
+     reducer
+     reducers)))
 
 (defun transducer-distinct-with (equality)
   "Distinct reducer with EQUALITY predicate."
-  nil)
+  (lambda (reducer)
+    (transducer-reducer
+     (lambda () (funcall reducer))
+     (lambda (result) nil)
+     (lambda (result item) nil))))
 
 (defun transducer-max-with (maxer)
   "Max reducer with MAXER function.")

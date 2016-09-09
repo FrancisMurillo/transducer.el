@@ -45,6 +45,9 @@
 ;;
 ;;; Code:
 
+(ert-deftest transducer-test/)
+
+
 
 (provide 'transducer-test)
 

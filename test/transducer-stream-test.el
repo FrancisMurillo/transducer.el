@@ -61,7 +61,7 @@
     (should (= 1 (funcall stream)))
     (should (= 2 (funcall stream)))
     (should (= 3 (funcall stream)))
-    (should p(= 4 (funcall stream)))
+    (should (= 4 (funcall stream)))
     (should (= 5 (funcall stream)))
     (should (= 6 (funcall stream)))
     (should (= 7 (funcall stream)))
