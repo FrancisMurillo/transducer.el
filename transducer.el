@@ -115,17 +115,6 @@ when the function stops producing values."
                   value (apply stream args))))))
          value)))))
 
-(defun transducer-transduce-stream (transducer reducer stream)
-  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
-  (let* ((reductor (funcall transducer reducer))
-      (value (funcall stream))
-      (result (funcall reductor)))
-    (while (not (eq value transducer-stream-stop))
-      (unless (eq value transducer-stream-start)
-        (setq result (funcall reductor result value)))
-      (setq value (funcall stream)))
-    (funcall reductor result)))
-
 
 ;;* Reducer
 (defun transducer-reducer (initial-fn complete-fn step-fn)
@@ -146,7 +135,32 @@ a final function COMPLETE-FN, and a step function STEP-FN."
    (lambda (result item) (append result (list item)))))
 
 
+;;* Reductions
+(defun transducer-transduce-stream (transducer reducer stream)
+  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
+  (let* ((reductor (funcall transducer reducer))
+      (value (funcall stream))
+      (result (funcall reductor)))
+    (while (not (eq value transducer-stream-stop))
+      (unless (eq value transducer-stream-start)
+        (setq result (funcall reductor result value)))
+      (setq value (funcall stream)))
+    (funcall reductor result)))
+
+(defun transducer-transduce-list (transducer reducer xs)
+  "A transduce on a list with TRANSDUCER, REDUCER and a list XS."
+  (let* ((reductor (funcall transducer reducer)))
+    (funcall reductor (-reduce-from reductor (funcall reductor) xs))))
+
 ;;* Api
+(defun transducer-identity ()
+  "An identity reducer."
+  (lambda (reducer)
+    (transducer-reducer
+     (lambda () (funcall reducer))
+     (lambda (result) (funcall reducer result))
+     (lambda (result item) (funcall reducer result item)))))
+
 (defun transducer-map (mapper)
   "Map reducer with MAPPER function."
   (lambda (reducer)

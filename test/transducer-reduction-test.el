@@ -1,10 +1,10 @@
-;;; transducer-reducer-test.el --- Test for transducer reducers
+;;; transducer-reduction-test.el --- Test for reduction
 ;;
-;; Filename: transducer-reducer-test.el
+;; Filename: transducer-reduction-test.el
 ;; Description:
 ;; Author: Francis Murillo
 ;; Maintainer:
-;; Created: Fri Sep  9 15:31:03 2016 (+0800)
+;; Created: Fri Sep  9 17:15:11 2016 (+0800)
 ;; Version:
 ;; Package-Requires: ()
 ;; Last-Updated:
@@ -45,41 +45,30 @@
 ;;
 ;;; Code:
 
-(ert-deftest transducer-reducer-test/base ()
-  (let ((reductor
-       (transducer-reducer
-        (lambda () 'start)
-        (lambda (result) 'complete)
-        (lambda (result item) 'step))))
-    (should (eq 'start (funcall reductor)))
-    (should (eq 'complete (funcall reductor nil)))
-    (should (eq 'step (funcall reductor nil nil)))))
-
-(ert-deftest transducer-reducer-test/lister ()
-  (let ((lister (transducer-list-reducer))
-      (xs (list 1 2 3 4 5)))
+(ert-deftest transducer-reduction-test/stream ()
+  (let ((xs (list 1 2 3 4 5)))
     (should
      (list-equal
       #'=
       xs
-      (-reduce-from
-       lister
-       (funcall lister)
-       xs))))
+      (transducer-transduce-stream
+       (transducer-identity)
+       (transducer-list-reducer)
+       (transducer-stream-from-list xs))))))
 
-  (let ((lister (transducer-list-reducer))
-      (xs (list)))
+(ert-deftest transducer-reduction-test/list ()
+  (let ((xs (list 1 2 3 4 5)))
     (should
      (list-equal
       #'=
       xs
-      (-reduce-from
-       lister
-       (funcall lister)
+      (transducer-transduce-list
+       (transducer-identity)
+       (transducer-list-reducer)
        xs)))))
 
 
-(provide 'transducer-reducer-test)
+(provide 'transducer-reduction-test)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; transducer-reducer-test.el ends here
+;;; transducer-reduction-test.el ends here
