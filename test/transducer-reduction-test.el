@@ -70,6 +70,39 @@
        (transducer-list-reducer)
        xs)))))
 
+(ert-deftest transducer-reduction-test/stream ()
+  (let* ((xs  (list 1 2 3 4 5))
+      (transducer-stream-to-list
+       (transducer-transduce-stream
+        (transducer-identity)
+        (transducer-stream-from-list xs))))
+    (should
+     (list-equal
+      #'=
+      xs
+      (transducer-stream-to-list
+       (transducer-transduce-stream
+        (transducer-identity)
+        (transducer-stream-from-list xs))))))
+  (let* ((xs  (list 1 2 3 4 5))
+      (filterer (lambda (x) (<= x 3))))
+    (should
+     (list-equal
+      #'=
+      (-filter filterer xs)
+      (transducer-stream-to-list
+       (transducer-transduce-stream
+        (transducer-filter filterer)
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      (list (-first filterer xs))
+      (transducer-stream-to-list
+       (transducer-transduce-stream
+        (transducer-first filterer)
+        (transducer-stream-from-list xs)))))))
+
 
 (provide 'transducer-reduction-test)
 

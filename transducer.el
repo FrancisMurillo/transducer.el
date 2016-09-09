@@ -85,6 +85,10 @@ when the function stops producing values."
              (car ys)
            (setq ys (cdr ys))))))))
 
+(defun transducer-stopped-stream ()
+  "A stream that always return the end of signal."
+  (lambda (&rest args) transducer-stream-stop))
+
 (defun transducer-stream-to-list (stream)
   "Unroll a STREAM for convenience."
   (let ((xs (list))
@@ -237,15 +241,39 @@ due to the implementation of transducers in general."
     (funcall reductor result)))
 
 (defun transducer-transduce-stream (transducer stream)
-  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
-  (let* ((reductor (funcall transducer reducer))
-      (value (funcall stream))
-      (result (funcall reductor)))
-    (while (not (eq value transducer-stream-stop))
-      (unless (eq value transducer-stream-start)
-        (setq result (funcall reductor result value)))
-      (setq value (funcall stream)))
-    (funcall reductor result)))
+  "A transduce on a stream with a TRANSDUCER on STREAM."
+  (lexical-let* ((step (make-symbol "stream-step"))
+      (skip (make-symbol "stream-skip"))
+      (reductor
+       (funcall transducer
+          (transducer-reducer
+           (lambda () skip)
+           (lambda (result) skip)
+           (lambda (result item) item)))))
+    (transducer-stream
+     (lambda (&rest args)
+       (lexical-let* ((value (apply stream args))
+           (state nil)
+           (result nil))
+         (while (not (eq state step))
+           (cond
+            ((eq value transducer-stream-start)
+             (setq value (apply stream args)
+                state nil))
+            ((eq value transducer-stream-stop)
+             (setq result value
+                state step))
+            (t
+             (setq result (funcall reductor skip value)
+                state step)
+             (when (transducer-reduced-value-p result)
+               (setq result (transducer-reduced-get-value result)
+                  stream (transducer-stopped-stream)
+                  state step))
+             (when (eq result skip)
+               (setq value (apply stream args)
+                  state nil)))))
+         result)))))
 
 
 (provide 'transducer)
