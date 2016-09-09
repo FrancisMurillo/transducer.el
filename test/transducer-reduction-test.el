@@ -45,16 +45,19 @@
 ;;
 ;;; Code:
 
-(ert-deftest transducer-reduction-test/stream ()
-  (let ((xs (list 1 2 3 4 5)))
-    (should
-     (list-equal
-      #'=
-      xs
-      (transducer-transduce-stream
-       (transducer-identity)
-       (transducer-list-reducer)
-       (transducer-stream-from-list xs))))))
+(ert-deftest transducer-reduction-test/reduced ()
+  (should (transducer-reduced-value-p
+           (transducer-reduced-value 'meow)))
+  (let ((value 'meow))
+    (should (eq value
+                (transducer-reduced-get-value
+                 (transducer-reduced-value value))))))
+  (let ((value 'purr))
+    (should (eq value
+                (transducer-reduced-get-value
+                 (transducer-reduced-value
+                  (transducer-reduced-value value))))))
+
 
 (ert-deftest transducer-reduction-test/list ()
   (let ((xs (list 1 2 3 4 5)))
@@ -62,7 +65,7 @@
      (list-equal
       #'=
       xs
-      (transducer-transduce-list
+      (transducer-transduce
        (transducer-identity)
        (transducer-list-reducer)
        xs)))))

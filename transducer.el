@@ -134,24 +134,6 @@ a final function COMPLETE-FN, and a step function STEP-FN."
    (lambda (result) result)
    (lambda (result item) (append result (list item)))))
 
-
-;;* Reductions
-(defun transducer-transduce-stream (transducer reducer stream)
-  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
-  (let* ((reductor (funcall transducer reducer))
-      (value (funcall stream))
-      (result (funcall reductor)))
-    (while (not (eq value transducer-stream-stop))
-      (unless (eq value transducer-stream-start)
-        (setq result (funcall reductor result value)))
-      (setq value (funcall stream)))
-    (funcall reductor result)))
-
-(defun transducer-transduce-list (transducer reducer xs)
-  "A transduce on a list with TRANSDUCER, REDUCER and a list XS."
-  (let* ((reductor (funcall transducer reducer)))
-    (funcall reductor (-reduce-from reductor (funcall reductor) xs))))
-
 ;;* Api
 (defun transducer-identity ()
   "An identity reducer."
@@ -206,6 +188,64 @@ due to the implementation of transducers in general."
                result
              (puthash item t cache-table)
              (funcall reducer result item))))))))
+
+(defun transducer-first (firster)
+  "First reducer with FIRSTER predicate."
+  (lambda (reducer)
+    (transducer-reducer
+     (lambda () (funcall reducer))
+     (lambda (result) (funcall reducer result))
+     (lambda (result item)
+       (if (funcall firster item)
+           (transducer-reduced-value
+            (funcall reducer result item))
+         result)))))
+
+
+;;* Reductions
+(defconst transducer-transduce-reduced 'transduce-reduced
+  "A value signifying that a transducer should stop.")
+
+(defun transducer-reduced-value (value)
+  "Create a flag or sentinel to stop a reducer with VALUE."
+  (if (transducer-reduced-value-p value)
+      (cons transducer-transduce-reduced (cdr value))
+    (cons transducer-transduce-reduced value)))
+
+(defun transducer-reduced-value-p (value)
+  "Check if the VALUE is reduced."
+  (and (consp value)
+     (eq (car value) transducer-transduce-reduced)))
+
+(defun transducer-reduced-get-value (reduced)
+  "Get the reduced value of a REDUCED."
+  (cdr reduced))
+
+
+(defun transducer-transduce (transducer reducer xs)
+  "A transduce on a list with TRANSDUCER, REDUCER and a list XS."
+  (let* ((reductor (funcall transducer reducer))
+      (result (funcall reductor))
+      (ys xs)
+      (item nil))
+    (while (not (null ys))
+      (setq result (funcall reductor result (car ys))
+         ys (cdr ys))
+      (when (transducer-reduced-value-p result)
+        (setq result (transducer-reduced-get-value result)
+           ys nil)))
+    (funcall reductor result)))
+
+(defun transducer-transduce-stream (transducer stream)
+  "A transduce on a stream with a TRANSDUCER and REDUCER on STREAM."
+  (let* ((reductor (funcall transducer reducer))
+      (value (funcall stream))
+      (result (funcall reductor)))
+    (while (not (eq value transducer-stream-stop))
+      (unless (eq value transducer-stream-start)
+        (setq result (funcall reductor result value)))
+      (setq value (funcall stream)))
+    (funcall reductor result)))
 
 
 (provide 'transducer)

@@ -50,20 +50,20 @@
       (xs (list 1 2 3))
       (ys (-map mapper xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-map mapper)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs)))
 
   (let* ((mapper (-partial #'* 2))
       (xs (list))
       (ys (-map mapper xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-map mapper)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs))))
 
 (ert-deftest transducer-test/filter ()
@@ -71,20 +71,20 @@
       (xs (list 1 2 3))
       (ys (-filter filterer xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-filter filterer)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs)))
 
-  (let* ((filterer (-partial #'* 2))
+  (let* ((filterer #'evenp)
       (xs (list))
       (ys (-filter filterer xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-filter filterer)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs))))
 
 (ert-deftest transducer-test/composes ()
@@ -95,12 +95,12 @@
            filterer
            (-map mapper xs)))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-composes
          (transducer-map mapper)
          (transducer-filter filterer))
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs)))
 
   (let* ((mapper #'1+)
@@ -110,12 +110,12 @@
            filterer
            (-map mapper xs)))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-composes
          (transducer-map mapper)
          (transducer-filter filterer))
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs)))
 
   (let* ((mapper #'1+)
@@ -128,35 +128,55 @@
             filterer
             (-map mapper xs))))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-composes
          (transducer-composes
           (transducer-map mapper)
           (transducer-filter filterer))
          (transducer-map remapper))
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'string-equal ys zs))))
 
 (ert-deftest transducer-test/distinct ()
   (let* ((xs (list 1 2 3 1 2 3 4 5 0))
       (ys (-distinct xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-distinct)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs)))
 
   (let* ((xs (list))
       (ys (-distinct xs))
       (zs
-       (transducer-transduce-stream
+       (transducer-transduce
         (transducer-distinct)
         (transducer-list-reducer)
-        (transducer-stream-from-list xs))))
+        xs)))
     (should (list-equal #'= ys zs))))
 
+(ert-deftest transducer-test/first ()
+  (let* ((filterer #'oddp)
+      (xs (list 2 4 5 6 8))
+      (ys (list (-first filterer xs)))
+      (zs
+       (transducer-transduce
+        (transducer-first filterer)
+        (transducer-list-reducer)
+        xs)))
+    (should (list-equal #'= ys zs)))
+
+  (let* ((filterer #'evenp)
+      (xs (list))
+      (ys (-first filterer xs))
+      (zs
+       (transducer-transduce
+        (transducer-first filterer)
+        (transducer-list-reducer)
+        xs)))
+    (should (list-equal #'= ys zs))))
 
 
 (provide 'transducer-test)
