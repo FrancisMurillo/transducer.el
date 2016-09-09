@@ -74,6 +74,27 @@ when the function stops producing values."
             value
           (setq value (apply streamer args))))))))
 
+(defun transducer-stream-from-list (xs)
+  "Create a stream from a list XS."
+  (lexical-let ((ys xs))
+    (transducer-stream
+     (lambda (&rest args)
+       (if (null ys)
+           transducer-stream-stop
+         (prog1
+             (car ys)
+           (setq ys (cdr ys))))))))
+
+(defun transducer-stream-to-list (stream)
+  "Unroll a STREAM for convenience."
+  (let ((xs (list))
+      (value (funcall stream)))
+    (while (not (eq value transducer-stream-stop))
+      (unless (eq value transducer-stream-start)
+        (push value xs))
+      (setq value (funcall stream)))
+    (reverse xs)))
+
 (defun transducer-stream-append (&rest streams)
   "Append several STREAMS in execution."
   (lexical-let* ((streams streams)
@@ -96,13 +117,51 @@ when the function stops producing values."
 
 (defun transducer-stream-reducer (stream)
   "A reducer for STREAM constructs."
-  nil)
+  (lexical-let ((x 1))
+    (transducer-stream
+     (lambda () `1nil)
+     (lambda (result) nil)
+     (lambda (result item) nil))))
 
+(defun transducer-reducer (initial-fn complete-fn step-fn)
+  "Create a reducer with an initial seed function INITIAL-FN,
+a final function COMPLETE-FN, and a step function STEP-FN."
+  (lambda (&rest args)
+    (let ((arity (length args)))
+      (pcase arity
+        (0 (funcall initial-fn))
+        (1 (apply complete-fn args))
+        (2 (apply step-fn args))))))
 
-(defun transducer-map (mapper)
+(defun transducer-transduce (transducer )
+  "meo"
+  1)
+
+(defun transducer-mapping (mapper)
   "Map reducer with MAPPER function."
   (lambda (reducer)
-    nil))
+    (transducer-reducer
+     (lambda () (funcall reducer))
+     (lambda (result) (funcall reducer result))
+     (lambda (result item) (funcall reducer result (apply mapper item))))))
+
+(defun transducer-filtering (filterer)
+  "Filter redcuer with FILTERER predicate."
+  (lambda (reducer)
+    (transducer-reducer
+     (lambda () (funcall reducer))
+     (lambda (result) (funcall reducer result))
+     (lambda (result item)
+       (if (funcall filterer item)
+           (funcall reducer result item)
+         result)))))
+
+(defun transducer-compose (&rest tns)
+  "Compose transducers TNS."
+  (lambda (reducer)
+    (lexical-let (())
+      1)))
+
 (defun transducer-distinct-with (equality)
   "Distinct reducer with EQUALITY predicate."
   nil)

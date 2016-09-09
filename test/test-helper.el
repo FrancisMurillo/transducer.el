@@ -47,7 +47,22 @@
 
 (eval-when-compile (require 'cl))
 
+(require 'dash)
+
 (require 'transducer (expand-file-name "transducer" "./"))
+
+(defun list-equal (equality xs ys)
+  (if (/= (length xs) (length ys))
+      nil
+    (if (and (null xs) (null ys))
+        t
+      (-any-p
+       (lambda (pair)
+         (funcall equality (car pair) (cdr pair)))
+       (-zip-pair xs ys)))))
+
+
+(provide 'test-helper)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; test-helper.el ends here
