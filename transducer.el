@@ -54,7 +54,16 @@
 Not to be used directly by the stream implementation.")
 
 (defconst transducer-stream-stop 'stream-stop
-  "A value signifying the end of a stream.")
+  "A value signifying the end of a stream.
+Should be used when the stream is done.")
+
+(defun transducer-stream-start-value-p (value)
+  "Check if VALUE is the start signal of a stream."
+  (eq value transducer-stream-start))
+
+(defun transducer-stream-stop-value-p (value)
+  "Check if VALUE is the stop signal of a stream."
+  (eq value transducer-stream-stop))
 
 (defun transducer-stream (fn)
   "A simple stream or generator with FN function.
@@ -64,10 +73,10 @@ when the function stops producing values."
       (value transducer-stream-start))
     (lambda (&rest args)
       (cond
-       ((eq value transducer-stream-start)
+       ((transducer-stream-start-value-p value)
         (setq value (apply streamer args))
         transducer-stream-start)
-       ((eq value transducer-stream-stop)
+       ((transducer-stream-stop-value-p value)
         transducer-stream-stop)
        (t
         (prog1
@@ -85,19 +94,19 @@ when the function stops producing values."
              (car ys)
            (setq ys (cdr ys))))))))
 
-(defun transducer-stopped-stream ()
-  "A stream that always return the end of signal."
-  (lambda (&rest _) transducer-stream-stop))
-
 (defun transducer-stream-to-list (stream)
   "Unroll a STREAM for convenience."
   (let ((xs (list))
       (value (funcall stream)))
-    (while (not (eq value transducer-stream-stop))
-      (unless (eq value transducer-stream-start)
+    (while (not (transducer-stream-stop-value-p value))
+      (unless (transducer-stream-start-value-p value)
         (push value xs))
       (setq value (funcall stream)))
     (reverse xs)))
+
+(defun transducer-stopped-stream ()
+  "A stream that always return the end of signal."
+  (lambda (&rest _) transducer-stream-stop))
 
 (defun transducer-stream-append (&rest streams)
   "Append several STREAMS in execution."
@@ -107,12 +116,12 @@ when the function stops producing values."
      (lambda (&rest args)
        (lexical-let ((value (apply stream args)))
          (while (and (not (null streams))
-                   (or (eq value transducer-stream-start)
-                      (eq value transducer-stream-stop)))
+                   (or (transducer-stream-start-value-p value)
+                      (transducer-stream-stop-value-p value)))
            (cond
-            ((eq value transducer-stream-start)
+            ((transducer-stream-start-value-p value)
              (setq value (apply stream args)))
-            ((eq value transducer-stream-stop)
+            ((transducer-stream-stop-value-p value)
              (setq streams (cdr streams))
              (unless (null streams)
                (setq stream (car streams)
@@ -263,10 +272,10 @@ Not to be used directly.")
            (result nil))
          (while (not (eq state transducer--stream-step))
            (cond
-            ((eq value transducer-stream-start)
+            ((transducer-stream-start-value-p value)
              (setq value (apply stream args)
                 state nil))
-            ((eq value transducer-stream-stop)
+            ((transducer-stream-stop-value-p value)
              (setq result value
                 state transducer--stream-step))
             (t

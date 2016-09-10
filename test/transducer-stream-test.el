@@ -55,7 +55,7 @@
             (prog1
                 index
               (setq index (1+ index))))))))
-    (should (eq transducer-stream-start (funcall stream)))
+    (should (transducer-stream-start-value-p (funcall stream)))
 
     (should (= 0 (funcall stream)))
     (should (= 1 (funcall stream)))
@@ -68,7 +68,7 @@
     (should (= 8 (funcall stream)))
     (should (= 9 (funcall stream)))
 
-    (should (eq transducer-stream-stop (funcall stream)))))
+    (should (transducer-stream-stop-value-p (funcall stream)))))
 
 (ert-deftest transducer-stream-test/from-list ()
   (let* ((first "first")
@@ -76,17 +76,17 @@
       (third -1)
       (xs (list first second third))
       (stream (transducer-stream-from-list xs)))
-    (should (eq transducer-stream-start (funcall stream)))
+    (should (transducer-stream-start-value-p (funcall stream)))
 
     (should (string-equal first (funcall stream)))
     (should (eq second (funcall stream)))
     (should (= third (funcall stream)))
 
-    (should (eq transducer-stream-stop (funcall stream))))
+    (should (transducer-stream-stop-value-p (funcall stream))))
 
   (let ((stream (transducer-stream-from-list (list))))
-    (should (eq transducer-stream-start (funcall stream)))
-    (should (eq transducer-stream-stop (funcall stream)))))
+    (should (transducer-stream-start-value-p (funcall stream)))
+    (should (transducer-stream-stop-value-p (funcall stream)))))
 
 (ert-deftest transducer-stream-test/list-identity ()
   (let ((xs (list 1 2 3)))
