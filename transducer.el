@@ -239,37 +239,44 @@ due to the implementation of transducers in general."
            ys nil)))
     (funcall reductor result)))
 
+
+(defconst transducer--stream-step 'stream-step
+  "A value stating whether the stream should continue on.
+Not to be used directly.")
+
+(defconst transducer--stream-skip 'stream-skip
+  "A value stating whether the stream should get another value.
+Not to be used directly.")
+
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
-  (lexical-let* ((step (make-symbol "stream-step"))
-      (skip (make-symbol "stream-skip"))
-      (reductor
+  (lexical-let* ((reductor
        (funcall transducer
           (transducer-reducer
-           (lambda () skip)
-           (lambda (_) skip)
+           (lambda () transducer--stream-skip)
+           (lambda (_) transducer--stream-skip)
            (lambda (_ item) item)))))
     (transducer-stream
      (lambda (&rest args)
        (lexical-let* ((value (apply stream args))
            (state nil)
            (result nil))
-         (while (not (eq state step))
+         (while (not (eq state transducer--stream-step))
            (cond
             ((eq value transducer-stream-start)
              (setq value (apply stream args)
                 state nil))
             ((eq value transducer-stream-stop)
              (setq result value
-                state step))
+                state transducer--stream-step))
             (t
-             (setq result (funcall reductor skip value)
-                state step)
+             (setq result (funcall reductor transducer--stream-skip value)
+                state transducer--stream-step)
              (when (transducer-reduced-value-p result)
                (setq result (transducer-reduced-get-value result)
                   stream (transducer-stopped-stream)
-                  state step))
-             (when (eq result skip)
+                  state transducer--stream-step))
+             (when (eq result transducer--stream-skip)
                (setq value (apply stream args)
                   state nil)))))
          result)))))
