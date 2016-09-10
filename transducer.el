@@ -108,6 +108,53 @@ when the function stops producing values."
   "A stream that always return the end of signal."
   (lambda (&rest _) transducer-stream-stop))
 
+
+(defun transducer-stream-cycle (n stream)
+  "Repeat the stream values N times of a STREAM."
+  (lexical-let ((repeating nil)
+      (counter 1)
+      (stored-values (list))
+      (current-values nil))
+    (if (zerop n)
+        (transducer-stopped-stream)
+      (transducer-stream
+       (lambda (&rest args)
+         (if (null repeating)
+             (lexical-let ((value (apply stream args)))
+               (cond
+                ((transducer-stream-start-value-p value)
+                 (let ((next-value (apply stream args)))
+                   (push next-value stored-values)
+                   next-value))
+                ((transducer-stream-stop-value-p value)
+                 (setq repeating t
+                    counter 2 ; Second cycle
+                    stored-values (reverse stored-values)
+                    current-values stored-values)
+                 (when (>= (1- counter) n) ; Adjust cycle check
+                   (setq stored-values nil
+                      current-values nil))
+                 (if (null current-values)
+                     transducer-stream-stop
+                   (prog1
+                       (car current-values)
+                     (setq current-values (cdr current-values)))))
+                (t
+                 (push value stored-values)
+                 value)))
+           (if (null current-values)
+               (if (>= counter n)
+                   transducer-stream-stop
+                 (progn
+                   (setq current-values stored-values
+                      counter (1+ counter))
+                   (prog1
+                       (car current-values)
+                     (setq current-values (cdr current-values)))))
+             (prog1
+                 (car current-values)
+               (setq current-values (cdr current-values))))))))))
+
 (defun transducer-stream-append (&rest streams)
   "Append several STREAMS in execution."
   (lexical-let* ((streams streams)

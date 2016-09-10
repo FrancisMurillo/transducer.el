@@ -118,6 +118,74 @@
       all
       values))))
 
+(ert-deftest transducer-stream-test/cycle ()
+  (let ((xs (list 1 2 3)))
+    (should
+     (list-equal
+      #'=
+      xs
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        1
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      (append xs xs)
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        2
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      (append xs xs xs)
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        3
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      nil
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        0
+        (transducer-stream-from-list xs))))))
+  (let ((xs (list)))
+    (should
+     (list-equal
+      #'=
+      xs
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        1
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      (append xs xs)
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        2
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      (append xs xs xs)
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        3
+        (transducer-stream-from-list xs)))))
+    (should
+     (list-equal
+      #'=
+      nil
+      (transducer-stream-to-list
+       (transducer-stream-cycle
+        0
+        (transducer-stream-from-list xs)))))))
+
 
 (provide 'transducer-stream-test)
 
