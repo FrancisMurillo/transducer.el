@@ -78,7 +78,7 @@ when the function stops producing values."
   "Create a stream from a list XS."
   (lexical-let ((ys xs))
     (transducer-stream
-     (lambda (&rest args)
+     (lambda (&rest _)
        (if (null ys)
            transducer-stream-stop
          (prog1
@@ -87,7 +87,7 @@ when the function stops producing values."
 
 (defun transducer-stopped-stream ()
   "A stream that always return the end of signal."
-  (lambda (&rest args) transducer-stream-stop))
+  (lambda (&rest _) transducer-stream-stop))
 
 (defun transducer-stream-to-list (stream)
   "Unroll a STREAM for convenience."
@@ -230,8 +230,7 @@ due to the implementation of transducers in general."
   "A transduce on a list with TRANSDUCER, REDUCER and a list XS."
   (let* ((reductor (funcall transducer reducer))
       (result (funcall reductor))
-      (ys xs)
-      (item nil))
+      (ys xs))
     (while (not (null ys))
       (setq result (funcall reductor result (car ys))
          ys (cdr ys))
@@ -248,8 +247,8 @@ due to the implementation of transducers in general."
        (funcall transducer
           (transducer-reducer
            (lambda () skip)
-           (lambda (result) skip)
-           (lambda (result item) item)))))
+           (lambda (_) skip)
+           (lambda (_ item) item)))))
     (transducer-stream
      (lambda (&rest args)
        (lexical-let* ((value (apply stream args))
