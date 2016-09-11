@@ -6,6 +6,8 @@
 
 (development
  (depends-on "dash")
+ (depends-on "stream" :git "https://github.com/FrancisMurillo/stream.el")
+ (depends-on "stream")
  (depends-on "ecukes")
  (depends-on "ert-runner")
  (depends-on "el-mock"))

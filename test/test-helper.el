@@ -49,6 +49,8 @@
 
 (require 'dash)
 
+(require 'stream)
+
 (require 'transducer (expand-file-name "transducer" "./"))
 
 (defun list-equal (equality xs ys)
