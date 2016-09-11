@@ -118,6 +118,51 @@
       all
       values))))
 
+(ert-deftest transducer-stream-test/copy ()
+  (let* ((xs (list 1 2 3))
+      (empty-value 'empty)
+      (copied-streams (transducer-stream-copy empty-value (transducer-stream-from-list xs)))
+      (base-stream (car copied-streams))
+      (copied-stream (cdr copied-streams)))
+    (should (transducer-stream-start-value-p (funcall copied-stream)))
+    (should (transducer-stream-start-value-p (funcall base-stream)))
+
+    (should (eq empty-value (funcall copied-stream)))
+    (should (eq empty-value (funcall copied-stream)))
+
+    (let ((value (funcall base-stream))
+        (copy-value (funcall copied-stream)))
+      (should (eq empty-value copy-value))
+      (setq copy-value (funcall copied-stream))
+
+      (should (= value copy-value)))
+
+    (let ((value (funcall base-stream))
+        (next-value (funcall base-stream))
+        (copy-value (funcall copied-stream)))
+      (should (eq empty-value copy-value))
+      (setq copy-value (funcall copied-stream))
+
+      (should (= value copy-value))
+      (setq copy-value (funcall copied-stream))
+
+      (should (= next-value copy-value)))
+
+    (let ((value (funcall base-stream))
+        (copy-value (funcall copied-stream)))
+      (should (transducer-stream-stop-value-p value))
+      (should (transducer-stream-stop-value-p value))))
+  (let* ((xs (list 1 2 3))
+      (empty-value 'empty)
+      (copied-streams (transducer-stream-copy empty-value (transducer-stream-from-list xs)))
+      (base-stream (car copied-streams))
+      (copied-stream (cdr copied-streams)))
+    (should
+     (list-equal
+      #'=
+      (transducer-stream-to-list base-stream)
+      (transducer-stream-to-list copied-stream)))))
+
 (ert-deftest transducer-stream-test/cycle ()
   (let ((xs (list 1 2 3)))
     (should

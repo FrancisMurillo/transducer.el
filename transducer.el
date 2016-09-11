@@ -109,6 +109,36 @@ when the function stops producing values."
   (lambda (&rest _) transducer-stream-stop))
 
 
+(defconst transducer-stream-empty 'stream-empty
+  "A value indicating a stream is empty.
+Not to be used directly.")
+
+(defun transducer-stream-copy (empty-value stream)
+  "Returns a cons pair with the car being a wrapped original stream
+and the cdr being a stream reflecting the wrapped one."
+  (lexical-let* ((stored-value transducer-stream-empty)
+      (stream-values (list)))
+    (cons
+     (transducer-stream
+      (lambda (&rest args)
+        (when (not (eq stored-value transducer-stream-empty ))
+          (setq stream-values (append stream-values (list stored-value))
+             stored-value transducer-stream-empty))
+        (lexical-let* ((value (apply stream args)))
+          (when (transducer-stream-start-value-p value)
+            (setq value (apply stream args)))
+          (setq stored-value value)
+          (when (transducer-stream-stop-value-p value)
+            (setq stream-values (append stream-values (list value))))
+          value)))
+     (transducer-stream
+      (lambda (&rest _)
+        (if (null stream-values)
+            empty-value
+          (prog1
+              (car stream-values)
+            (setq stream-values (cdr stream-values)))))))))
+
 (defun transducer-stream-cycle (n stream)
   "Repeat the stream values N times of a STREAM."
   (lexical-let ((repeating nil)
