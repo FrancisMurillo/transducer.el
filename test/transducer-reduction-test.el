@@ -83,8 +83,7 @@
       (stream-to-list
        (transducer-transduce-stream
         (transducer-identity)
-        (stream-from-list xs))))))
-)
+        (stream-from-list xs)))))))
 
 
 (provide 'transducer-reduction-test)

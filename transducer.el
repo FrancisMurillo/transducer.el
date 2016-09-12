@@ -45,10 +45,13 @@
 ;;
 ;;; Code:
 
+(eval-when-compile (require 'cl))
+
 (require 'dash)
+
 (require 'stream)
 
-;;* Reducer
+;;* Core
 (defun transducer-reducer (initial-fn complete-fn step-fn)
   "Create a reducer with an initial seed function INITIAL-FN,
 a final function COMPLETE-FN, and a step function STEP-FN."
@@ -58,6 +61,23 @@ a final function COMPLETE-FN, and a step function STEP-FN."
         (0 (funcall initial-fn))
         (1 (apply complete-fn args))
         (2 (apply step-fn args))))))
+
+(defun transducer-wrapped-reducer (initial-fn complete-fn step-fn)
+  "Just a wrapper over `transducer-reducer' so that the lambda closure
+can be removed with INITIAL-FN, COMPLETE-FN and STEP-FN."
+  (lambda (reducer)
+    (transducer-reducer
+     (lambda () (funcall initial-fn reducer))
+     (lambda (result) (funcall complete-fn reducer result))
+     (lambda (result item) (funcall step-fn reducer result item)))))
+
+(defun transducer-step-reducer (step-fn)
+  "Return a reducer with just mainly a STEP-FN and a default
+INITIAL-FN and COMPLETE-FN."
+  (transducer-wrapped-reducer
+   (lambda (reducer) (funcall reducer))
+   (lambda (reducer result) (funcall reducer result))
+   (lambda (reducer result item) (funcall step-fn reducer result item))))
 
 (defun transducer-list-reducer ()
   "A reducer for lists."
@@ -69,30 +89,21 @@ a final function COMPLETE-FN, and a step function STEP-FN."
 ;;* Api
 (defun transducer-identity ()
   "An identity reducer."
-  (lambda (reducer)
-    (transducer-reducer
-     (lambda () (funcall reducer))
-     (lambda (result) (funcall reducer result))
-     (lambda (result item) (funcall reducer result item)))))
+  (transducer-step-reducer
+   (lambda (reducer result item) (funcall reducer result item))))
 
 (defun transducer-map (mapper)
   "Map reducer with MAPPER function."
-  (lambda (reducer)
-    (transducer-reducer
-     (lambda () (funcall reducer))
-     (lambda (result) (funcall reducer result))
-     (lambda (result item) (funcall reducer result (funcall mapper item))))))
+  (transducer-step-reducer
+   (lambda (reducer result item) (funcall reducer result (funcall mapper item)))))
 
 (defun transducer-filter (filterer)
-  "Filter redcuer with FILTERER predicate."
-  (lambda (reducer)
-    (transducer-reducer
-     (lambda () (funcall reducer))
-     (lambda (result) (funcall reducer result))
-     (lambda (result item)
-       (if (funcall filterer item)
-           (funcall reducer result item)
-         result)))))
+  "Filter reducer with FILTERER predicate."
+  (transducer-step-reducer
+   (lambda (reducer result item)
+     (if (funcall filterer item)
+         (funcall reducer result item)
+       result))))
 
 (defun transducer-composes (&rest reducers)
   "Compose transducers REDUCERS.
@@ -123,15 +134,12 @@ due to the implementation of transducers in general."
 
 (defun transducer-first (firster)
   "First reducer with FIRSTER predicate."
-  (lambda (reducer)
-    (transducer-reducer
-     (lambda () (funcall reducer))
-     (lambda (result) (funcall reducer result))
-     (lambda (result item)
-       (if (funcall firster item)
-           (transducer-reduced-value
-            (funcall reducer result item))
-         result)))))
+  (transducer-step-reducer
+   (lambda (reducer result item)
+     (if (funcall firster item)
+         (transducer-reduced-value
+          (funcall reducer result item))
+       result))))
 
 
 ;;* Reductions
@@ -154,6 +162,7 @@ due to the implementation of transducers in general."
   (cdr reduced))
 
 
+;;* Transduce
 (defun transducer-transduce (transducer reducer xs)
   "A transduce on a list with TRANSDUCER, REDUCER and a list XS."
   (let* ((reductor (funcall transducer reducer))
@@ -168,6 +177,7 @@ due to the implementation of transducers in general."
     (funcall reductor result)))
 
 
+;;* Stream Transduce
 (defconst transducer--stream-step 'stream-step
   "A value stating whether the stream should continue on.
 Not to be used directly.")
@@ -175,10 +185,6 @@ Not to be used directly.")
 (defconst transducer--stream-skip 'stream-skip
   "A value stating whether the stream should get another value.
 Not to be used directly.")
-
-(defun transducer-stopped-stream ()
-  "A stream that always return the end of signal."
-  (lambda (&rest _) stream-stop))
 
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
@@ -206,7 +212,7 @@ Not to be used directly.")
                 state transducer--stream-step)
              (when (transducer-reduced-value-p result)
                (setq result (transducer-reduced-get-value result)
-                  stream (transducer-stopped-stream)
+                  stream (stream-stopped)
                   state transducer--stream-step))
              (when (eq result transducer--stream-skip)
                (setq value (apply stream args)

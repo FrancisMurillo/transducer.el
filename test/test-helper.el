@@ -1,4 +1,4 @@
-;;; test-helper.el ---
+;;; test-helper.el ---  -*- lexical-binding: t; -*-
 ;;
 ;; Filename: test-helper.el
 ;; Description:
