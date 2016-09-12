@@ -141,6 +141,16 @@ due to the implementation of transducers in general."
           (funcall reducer result item))
        result))))
 
+(defun transducer-take (n)
+  "Get the first N results of a STREAM."
+  (lexical-let ((count 0))
+    (transducer-step-reducer
+     (lambda (reducer result item)
+       (if (>= count n)
+           (transducer-reduced-value result)
+         (setq count (1+ count))
+         (funcall reducer result item))))))
+
 
 ;;* Reductions
 (defconst transducer-transduce-reduced 'transduce-reduced

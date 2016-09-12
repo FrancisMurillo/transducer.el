@@ -178,6 +178,35 @@
         xs)))
     (should (list-equal #'= ys zs))))
 
+(ert-deftest transducer-test/take ()
+  (let* ((xs (list 1 2 3 4 5 6 7 8 9 10))
+         (n 6)
+         (ys (-take n xs))
+         (zs
+          (transducer-transduce
+           (transducer-take n)
+           (transducer-list-reducer)
+           xs)))
+    (should (list-equal #'= ys zs)))
+  (let* ((xs (list 1 2 3 4 5 6 7 8 9 10))
+         (n (* 2 (length xs)))
+         (ys (-take n xs))
+         (zs
+          (transducer-transduce
+           (transducer-take n)
+           (transducer-list-reducer)
+           xs)))
+    (should (list-equal #'= ys zs)))
+  (let* ((xs (list))
+         (n 5)
+         (ys (-take n xs))
+         (zs
+          (transducer-transduce
+           (transducer-take n)
+           (transducer-list-reducer)
+           xs)))
+    (should (list-equal #'= ys zs))))
+
 
 (provide 'transducer-test)
 
