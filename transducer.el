@@ -97,6 +97,15 @@ INITIAL-FN and COMPLETE-FN."
   (transducer-step-reducer
    (lambda (reducer result item) (funcall reducer result (funcall mapper item)))))
 
+(defun transducer-map-indexed (mapper)
+  "Map reducer with MAPPER function with index and item as arguments."
+  (lexical-let ((count 0))
+    (transducer-map
+     (lambda (item)
+       (prog1
+           (funcall mapper count item)
+         (setq count (1+ count)))))))
+
 (defun transducer-filter (filterer)
   "Filter reducer with FILTERER predicate."
   (transducer-step-reducer
@@ -140,6 +149,7 @@ due to the implementation of transducers in general."
          (transducer-reduced-value
           (funcall reducer result item))
        result))))
+
 
 (defun transducer-take (n)
   "Get the first N results of a STREAM."

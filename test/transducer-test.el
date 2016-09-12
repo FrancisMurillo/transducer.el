@@ -55,7 +55,6 @@
         (transducer-list-reducer)
         xs)))
     (should (list-equal #'= ys zs)))
-
   (let* ((mapper (-partial #'* 2))
       (xs (list))
       (ys (-map mapper xs))
@@ -65,6 +64,17 @@
         (transducer-list-reducer)
         xs)))
     (should (list-equal #'= ys zs))))
+
+(ert-deftest transducer-test/map-indexed ()
+  (let* ((mapper (lambda (index item) index))
+         (xs (list 1 2 3))
+         (ys (-map-indexed mapper xs))
+         (zs
+          (transducer-transduce
+           (transducer-map-indexed mapper)
+           (transducer-list-reducer)
+           xs)))
+    (should (list-equal #'= ys zs)))  )
 
 (ert-deftest transducer-test/filter ()
   (let* ((filterer #'oddp)
