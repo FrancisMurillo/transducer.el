@@ -47,9 +47,6 @@
 
 (eval-when-compile (require 'cl))
 
-(require 'stream)
-
-
 ;;* Core
 (defun transducer-reducer (initial-fn complete-fn step-fn)
   "Create a reducer with an initial seed function INITIAL-FN,
@@ -118,7 +115,7 @@ INITIAL-FN and COMPLETE-FN."
 The order is left to right instead of the standard right to left
 due to the implementation of transducers in general."
   (lambda (reducer)
-    (reduce
+    (cl-reduce
      (lambda ( accumulated-reducer new-reducer)
        (funcall new-reducer accumulated-reducer))
      (reverse reducers)
@@ -208,6 +205,7 @@ Not to be used directly.")
 
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
+  (require 'stream)
   (lexical-let* ((reductor
        (funcall transducer
           (transducer-reducer
