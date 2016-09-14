@@ -47,6 +47,9 @@
 
 (eval-when-compile (require 'cl))
 
+(require 'stream)
+
+
 ;;* Core
 (defun transducer-reducer (initial-fn complete-fn step-fn)
   "Create a reducer with an initial seed function INITIAL-FN,
@@ -205,7 +208,6 @@ Not to be used directly.")
 
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
-  (require 'stream)
   (lexical-let* ((reductor
        (funcall transducer
           (transducer-reducer
