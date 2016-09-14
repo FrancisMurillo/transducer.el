@@ -6,7 +6,7 @@
 ;; Maintainer: Francis Murillo
 ;; Created: Thu Sep  8 19:36:33 2016 (+0800)
 ;; Version: 0.1.0
-;; Package-Requires: (dash)
+;; Package-Requires: (stream)
 ;; Last-Updated:
 ;;           By:
 ;;     Update #: 0
@@ -46,10 +46,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-
-(require 'dash)
-
-(require 'stream)
 
 ;;* Core
 (defun transducer-reducer (initial-fn complete-fn step-fn)
@@ -208,6 +204,7 @@ Not to be used directly.")
 
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
+  (require 'stream)
   (lexical-let* ((reductor
        (funcall transducer
           (transducer-reducer
