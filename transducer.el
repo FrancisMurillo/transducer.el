@@ -115,18 +115,19 @@ INITIAL-FN and COMPLETE-FN."
 The order is left to right instead of the standard right to left
 due to the implementation of transducers in general."
   (lambda (reducer)
-    (-reduce-from
+    (reduce
      (lambda ( accumulated-reducer new-reducer)
        (funcall new-reducer accumulated-reducer))
-     reducer
-     (reverse reducers))))
+     (reverse reducers)
+     :initial-value
+     reducer)))
 
 
 (defun transducer-distinct ()
   "Distinct reducer with EQUALITY predicate."
   (lambda (reducer)
     (lexical-let ((cache-table (make-hash-table))
-        (not-found (make-symbol "distinct-not-found")))
+                  (not-found (make-symbol "distinct-not-found")))
       (transducer-reducer
        (lambda () (funcall reducer))
        (lambda (result) (funcall reducer result))
@@ -171,7 +172,7 @@ due to the implementation of transducers in general."
 (defun transducer-reduced-value-p (value)
   "Check if the VALUE is reduced."
   (and (consp value)
-     (eq (car value) transducer-transduce-reduced)))
+       (eq (car value) transducer-transduce-reduced)))
 
 (defun transducer-reduced-get-value (reduced)
   "Get the reduced value of a REDUCED."
