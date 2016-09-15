@@ -217,6 +217,18 @@
            xs)))
     (should (list-equal #'= ys zs))))
 
+(ert-deftest transducer-test/pair ()
+  (let* ((first-pair (cons 1 2))
+      (second-pair (cons 3 4))
+      (pairs (list first-pair second-pair))
+      (xs (unroll-pairs pairs))
+      (ys
+       (transducer-transduce
+        (transducer-pair)
+        (transducer-list-reducer)
+        xs)))
+    (should (list-equal (-partial #'pair-equal #'=) pairs ys))))
+
 
 (provide 'transducer-test)
 
