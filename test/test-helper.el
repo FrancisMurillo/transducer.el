@@ -54,6 +54,7 @@
 (require 'transducer (expand-file-name "transducer" "./"))
 
 (defun list-equal (equality xs ys)
+  "Check if a list is equal with EQUALITY, XS and YS."
   (if (/= (length xs) (length ys))
       nil
     (if (and (null xs) (null ys))
@@ -62,6 +63,20 @@
        (lambda (pair)
          (funcall equality (car pair) (cdr pair)))
        (-zip-pair xs ys)))))
+
+(defun pair-equal (equality xp yp)
+  (and (consp xp)
+     (consp yp)
+     (funcall equality (car xp) (car yp))
+     (funcall equality (cdr xp) (cdr yp))))
+
+(defun unroll-pairs (pairs)
+  (-reduce
+   #'append
+   (-map
+    (lambda (pair)
+      (list (car pair) (cdr pair)))
+    pairs)))
 
 
 (provide 'test-helper)

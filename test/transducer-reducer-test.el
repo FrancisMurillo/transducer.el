@@ -78,6 +78,40 @@
        (funcall lister)
        xs)))))
 
+(ert-deftest transducer-reducer-test/alister ()
+  (let* ((lister (transducer-alist-reducer))
+      (first-pair (cons 1 2))
+      (second-pair (cons 3 4))
+      (pairs (list first-pair second-pair)))
+    (should
+     (list-equal
+      (-partial #'pair-equal #'=)
+      pairs
+      (-reduce-from
+       lister
+       (funcall lister)
+       (unroll-pairs pairs))))
+    (should
+     (list-equal
+      (-partial #'pair-equal #'=)
+      pairs
+      (-reduce-from
+       lister
+       (funcall lister)
+       (append
+        (unroll-pairs pairs)
+        (list "should not be consumed"))))))
+  (let* ((lister (transducer-alist-reducer))
+      (pairs (list)))
+    (should
+     (list-equal
+      (-partial #'pair-equal #'=)
+      pairs
+      (-reduce-from
+       lister
+       (funcall lister)
+       (unroll-pairs pairs))))))
+
 
 (provide 'transducer-reducer-test)
 

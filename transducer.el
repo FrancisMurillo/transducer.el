@@ -82,6 +82,26 @@ INITIAL-FN and COMPLETE-FN."
    (lambda (result) result)
    (lambda (result item) (append result (list item)))))
 
+(defconst transducer--alist-empty 'alist-empty
+  "A value indicating a reducer has an empty pair.  Not to be used directly.")
+
+(defun transducer-alist-reducer ()
+  "A reducer for lists."
+  (lexical-let ((head nil))
+    (transducer-reducer
+     (lambda ()
+       (setq head transducer--alist-empty)
+       (list))
+     (lambda (result) result)
+     (lambda (result item)
+       (if (eq head transducer--alist-empty)
+           (prog1
+               result
+             (setq head item))
+         (prog1
+             (append result (list (cons head item)))
+           (setq head transducer--alist-empty)))))))
+
 ;;* Api
 (defun transducer-identity ()
   "An identity reducer."
@@ -192,6 +212,12 @@ due to the implementation of transducers in general."
         (setq result (transducer-reduced-get-value result)
            ys nil)))
     (funcall reductor result)))
+
+(defun transducer-transduce-plist (transducer reducer properties)
+  "A specialized transduce on a property list with TRANSDUCER, REDUCER and PROPERTIES."
+  (let* ((reductor (funcall transducer reducer))
+      (result (funcall reductor))
+      (keys () properties))))
 
 
 ;;* Stream Transduce
