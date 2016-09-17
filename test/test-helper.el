@@ -49,7 +49,7 @@
 
 (require 'dash)
 
-(require 'stream)
+(require 'stream (expand-file-name "stream" "../stream.el"))
 
 (require 'transducer (expand-file-name "transducer" "./"))
 

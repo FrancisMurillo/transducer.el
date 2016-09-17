@@ -59,7 +59,7 @@ a final function COMPLETE-FN, and a step function STEP-FN."
         (2 (apply step-fn args))))))
 
 (defun transducer-wrapped-reducer (initial-fn complete-fn step-fn)
-  "Just a wrapper over `transducer-reducer' so that the lambda closure
+  "Just a wrapper over `transducer-reducer' so that the closure
 can be removed with INITIAL-FN, COMPLETE-FN and STEP-FN."
   (lambda (reducer)
     (transducer-reducer
@@ -74,6 +74,7 @@ INITIAL-FN and COMPLETE-FN."
    (lambda (reducer) (funcall reducer))
    (lambda (reducer result) (funcall reducer result))
    (lambda (reducer result item) (funcall step-fn reducer result item))))
+
 
 (defun transducer-list-reducer ()
   "A reducer for lists."
@@ -176,8 +177,10 @@ Not to be used directly.")
 
 (defun transducer-pair ()
   "A transducer that pairs values together."
-  (lexical-let ((head transducer--pair-empty))
-    (transducer-step-reducer
+  (lexical-let ((head nil))
+    (transducer-wrapped-reducer
+     (lambda (reducer) (setq head transducer--pair-empty) (funcall reducer))
+     (lambda (reducer result) (setq head nil) (funcall reducer result))
      (lambda (reducer result item)
        (if (eq head transducer--pair-empty)
            (prog1
@@ -221,20 +224,6 @@ Not to be used directly.")
         (setq result (transducer-reduced-get-value result)
            ys nil)))
     (funcall reductor result)))
-
-(defun transducer-transduce-plist (transducer reducer properties)
-  "A specialized transduce on a property list with TRANSDUCER, REDUCER and PROPERTIES."
-  (transducer-transduce
-   (transducer-composes
-    (transducer-step-reducer
-     (lambda (reducer result item)
-       (let ((first (car item))
-           (second (cdr item)))
-         (funcall reducer result first second)))))
-   reducer
-   (transducer-transduce
-    (transducer-identity)
-    (transducer-alist-reducer))))
 
 
 ;;* Stream Transduce
