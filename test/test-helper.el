@@ -49,13 +49,20 @@
 
 (require 'dash)
 
-(condition-case ex
-    (require 'stream)
+(defun get-required-file (name url)
+  "Get required NAME and URL."
+  (condition-case ex
+    (require name)
   ('error
    (progn
      (require 'url)
-     (url-copy-file "https://raw.githubusercontent.com/FrancisMurillo/stream.el/master/stream.el" "stream.el")
-     (load-file "./stream.el"))))
+     (let ((req-file (make-temp-file "req-")))
+       (url-copy-file url req-file)
+       (load-file req-file)
+       (delete-file req-file))))))
+
+(get-required-file 'stream "https://raw.githubusercontent.com/FrancisMurillo/stream.el/master/stream.el")
+
 
 (require 'transducer (expand-file-name "transducer" "./"))
 
