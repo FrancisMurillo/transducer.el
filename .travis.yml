@@ -7,6 +7,4 @@ before_install:
 env:
   - EVM_EMACS=emacs-24.5-travis
 script:
-  - emacs --version
-  - cask list
   - make all
