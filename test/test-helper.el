@@ -56,7 +56,7 @@
   ('error
    (progn
      (require 'url)
-     (let ((req-file (make-temp-file "req-")))
+     (let ((req-file (make-temp-name "req-")))
        (url-copy-file url req-file)
        (load-file req-file)
        (delete-file req-file))))))
