@@ -56,7 +56,8 @@
   ('error
    (progn
      (require 'url)
-     (let ((req-file (make-temp-name "req-")))
+     (let ((req-file (make-temp-name
+                    (format "dl-%s-" (symbol-name name)))))
        (url-copy-file url req-file)
        (load-file req-file)
        (delete-file req-file))))))
