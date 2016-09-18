@@ -6,7 +6,7 @@
 ;; Maintainer: Francis Murillo
 ;; Created: Thu Sep  8 19:36:33 2016 (+0800)
 ;; Version: 0.1.0
-;; Package-Requires: (stream)
+;; Package-Requires: ()
 ;; Last-Updated:
 ;;           By:
 ;;     Update #: 0
