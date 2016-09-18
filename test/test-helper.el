@@ -54,7 +54,7 @@
   ('error
    (progn
      (require 'url)
-     (url-file "https://raw.githubusercontent.com/FrancisMurillo/stream.el/master/stream.el" "stream.el")
+     (url-copy-file "https://raw.githubusercontent.com/FrancisMurillo/stream.el/master/stream.el" "stream.el")
      (load-file "./stream.el"))))
 
 (require 'transducer (expand-file-name "transducer" "./"))
