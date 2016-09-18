@@ -1,26 +1,12 @@
-EMACS ?= emacs
 CASK ?= cask
+EMACS ?= emacs
 
 all: test
 
-test: clean-elc
-	${MAKE} unit
-	${MAKE} ecukes
-	${MAKE} compile
-	${MAKE} unit
-	${MAKE} ecukes
-	${MAKE} clean-elc
+test: unit
 
 unit:
-	${CASK} exec ert-runner
+	$(CASK) exec ert-runner
 
 ecukes:
-	${CASK} exec ecukes
-
-compile:
-	${CASK} build
-
-clean-elc:
-	rm -f *.elc
-
-.PHONY:	all test unit ecukes compile
+	$(CASK) exec ecukes

@@ -9,4 +9,4 @@ env:
 script:
   - emacs --version
   - cask list
-  - make test
+  - make all
