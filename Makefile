@@ -21,6 +21,6 @@ compile:
 	${CASK} build
 
 clean-elc:
-	rm -f prodigy.elc
+	rm -f *.elc
 
 .PHONY:	all test unit ecukes compile

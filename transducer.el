@@ -237,6 +237,7 @@ Not to be used directly.")
 
 (defun transducer-transduce-stream (transducer stream)
   "A transduce on a stream with a TRANSDUCER on STREAM."
+  (require 'stream)
   (lexical-let* ((reductor
        (funcall transducer
           (transducer-reducer
